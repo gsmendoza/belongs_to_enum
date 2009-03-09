@@ -1,0 +1,142 @@
+= BelongsToEnum
+
+== belongs_to_enum
+
+Given that User has an attribute status_id, you can define its enum fields like this:
+
+    class User < ActiveRecord::Base
+      belongs_to_enum :status, { 1 => :new, 2 => :in_progress, 3 => :completed, 4 => :cancelled}
+    end
+
+User will now have an array of status enum fields.
+
+    >> User.statuses
+    => [EnumField(id: 1, name: :new, title: "New", position: 1, :default? => false), ... ]
+
+Each EnumField object has the following attributes, of which only id and name are required:
+
+* id
+* name - symbol uniquely identifying the enum field
+* title - for displaying the field in the view. Default is <code>name.to_s.titleize</code>.
+* position - for sorting the enum fields. User.statuses is sorted by position. Default is id.
+* default - is this the default status?
+
+You can now...
+
+* get the status by id or by name
+
+    >> User.status(1)
+    => EnumField(id: 1, name: :new, title: "New", position: 1, :default? => false)
+
+    >> User.status(:completed)
+    => EnumField(id: 3, name: :completed, title: "Completed", position: 3, :default? => false)
+
+* set the status of a user by enum_field or by name
+
+    >> user.status = User.status(:new)
+    >> user.status = :completed
+
+* check the status of a user
+
+    >> user.completed?
+
+* set the title or position of the enum fields
+
+    >> belongs_to_enum :status, { 1 => :new, 2 => {:name => :in_progress, :title => 'Continuing', :position => 100}}
+
+* specify the default status
+
+    >> belongs_to_enum :status, { 1 => :new, 2 => {:name => :in_progress, :title => 'Continuing', :position => 100, :default => true}}
+    >> User.status(:in_progress).default?
+    => true
+    >> User.default_status
+    => EnumField(id: 2, name: :in_progress, title: "Continuing", position: 100, :default? => true)
+
+== validates_inclusion_of_enum
+
+To validate that the value of status is in the enum field list, you can use validates_inclusion_of_enum macro
+
+    class User < ActiveRecord::Base
+      belongs_to_enum :status, { 1 => :new, 2 => :in_progress, 3 => :completed, 4 => :cancelled}
+      validates_inclusion_of_enum :status_id
+    end
+
+The default error message of validates_inclusion_of_enum is 'is not valid' but you can pass any validates_inclusion_of options:
+
+    validates_inclusion_of_enum :status_id,
+    { :in => [3, :cancelled], :message => "must be completed or ended", :allow_blank => true}
+
+Note that you can pass the id or the name of the enum field in the :in option.
+
+== Saving the enum fields in a table
+
+It's possible to save the enum fields in a database table. The table must have the following fields:
+
+    create_table :statuses do |t|
+      t.string :name
+      t.string :title
+      t.integer :position
+      t.boolean :default
+    end
+
+You can then pass <code>Status.all</code> instead of a hash to belongs_to_enum
+
+    class User < ActiveRecord::Base
+      belongs_to_enum :status, Status.all
+    end
+
+User.statuses will return instances of Status WITH ActsAsEnumField extensions. For example, if the title of User.status(:new) is nil,
+calling <code>User.status(:new).title</code> will still return the titleized name like the EnumField.
+
+Beware however that the Status class itself is not extended with ActsAsEnumField. While the status below will
+have the extensions,
+    >> s = User.status(1)
+    >> s.acts_as_enum_field?
+    => true
+
+Status.first won't have them.
+    >> s = Status.first
+    >> s.acts_as_enum_field?
+    NoMethodError: undefined method `acts_as_enum_field?' for #<Status:0xb6dc12a0>
+      from /usr/lib/ruby/gems/1.8/gems/activerecord-2.2.2/lib/active_record/attribute_methods.rb:255:in `method_missing'
+      from (irb):5
+
+This limitation is something I hope to work on in a future release.
+
+== Sample usage
+
+Here's how I might use belongs_to_enum.
+
+In the model,
+
+    class User < ActiveRecord::Base
+      belongs_to_enum :status,
+      { 1 => {:name => :new, :default => true}
+        2 => {:name => :in_progress, :title => 'Continuing'},
+        3 => :completed,
+        4 => {:name => :cancelled, :title => 'Ended', :position => 5}
+      }
+      validates_inclusion_of_enum :status_id, :allow_blank => true
+
+      # Set the status to the default status
+      def after_initialize
+        self.status ||= User.default_status if self.new_record?
+      end
+    end
+
+Writing a dropdown for the statuses is pretty straightforward
+
+    form_for @user do |f|
+      f.select(:status_id, User.statuses.collect {|p| [ p.title, p.id ] }, { :include_blank => true })
+    end
+
+== Tested in
+
+* Rails 2.2
+* Ruby 1.8.6
+
+== Thanks
+
+Thanks to Kevin Rood of Acceletron Corporation for allowing me to release this plugin.
+
+Copyright (c) 2009 George Mendoza, released under the MIT license. Email: <code>["67736d656e646f7a6140676d61696c2e636f6d"].pack("H*")</code>
