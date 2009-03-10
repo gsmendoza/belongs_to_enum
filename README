@@ -130,6 +130,13 @@ Writing a dropdown for the statuses is pretty straightforward
       f.select(:status_id, User.statuses.collect {|p| [ p.title, p.id ] }, { :include_blank => true })
     end
 
+== Similar plugins
+
+{Acts as Enumerated}[http://www.railslodge.com/plugins/8-acts-as-enumerated]
+{Acts as Enumeration}[http://github.com/pluginaweek/acts_as_enumeration/tree/master]
+{Enumerations Mixin}[http://www.railslodge.com/plugins/887-enumerations-mixin]
+{enum_field}[http://giraffesoft.ca/blog/2009/02/17/floss-week-day-2-the-enum-field-rails-plugin.html]
+
 == Tested in
 
 * Rails 2.2
