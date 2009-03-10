@@ -132,11 +132,11 @@ Writing a dropdown for the statuses is pretty straightforward
 
 == Similar plugins
 
-http://www.railslodge.com/plugins/8-acts-as-enumerated
-http://github.com/pluginaweek/acts_as_enumeration
-http://giraffesoft.ca/blog/2009/02/17/floss-week-day-2-the-enum-field-rails-plugin.html
-https://rubyforge.org/projects/enum-column
-http://github.com/zachinglis/magic_enums
+* http://www.railslodge.com/plugins/8-acts-as-enumerated
+* http://github.com/pluginaweek/acts_as_enumeration
+* http://giraffesoft.ca/blog/2009/02/17/floss-week-day-2-the-enum-field-rails-plugin.html
+* https://rubyforge.org/projects/enum-column
+* http://github.com/zachinglis/magic_enums
 
 == Tested in
 
