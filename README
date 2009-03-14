@@ -2,15 +2,15 @@
 
 == belongs_to_enum
 
-Given that User has an attribute status_id, you can define its enum fields like this:
+Given that Task has an attribute status_id, you can define its enum fields like this:
 
-    class User < ActiveRecord::Base
+    class Task < ActiveRecord::Base
       belongs_to_enum :status, { 1 => :new, 2 => :in_progress, 3 => :completed, 4 => :cancelled}
     end
 
-User will now have an array of status enum fields.
+Task will now have an array of status enum fields.
 
-    >> User.statuses
+    >> Task.statuses
     => [EnumField(id: 1, name: :new, title: "New", position: 1, :default? => false), ... ]
 
 Each EnumField object has the following attributes, of which only id and name are required:
@@ -18,27 +18,27 @@ Each EnumField object has the following attributes, of which only id and name ar
 * id
 * name - symbol uniquely identifying the enum field
 * title - for displaying the field in the view. Default is <code>name.to_s.titleize</code>.
-* position - for sorting the enum fields. User.statuses is sorted by position. Default is id.
+* position - for sorting the enum fields. Task.statuses is sorted by position. Default is id.
 * default - is this the default status?
 
 You can now...
 
 * get the status by id or by name
 
-    >> User.status(1)
+    >> Task.status(1)
     => EnumField(id: 1, name: :new, title: "New", position: 1, :default? => false)
 
-    >> User.status(:completed)
+    >> Task.status(:completed)
     => EnumField(id: 3, name: :completed, title: "Completed", position: 3, :default? => false)
 
-* set the status of a user by enum_field or by name
+* set the status of a task by enum_field or by name
 
-    >> user.status = User.status(:new)
-    >> user.status = :completed
+    >> task.status = Task.status(:new)
+    >> task.status = :completed
 
-* check the status of a user
+* check the status of a task
 
-    >> user.completed?
+    >> task.completed?
 
 * set the title or position of the enum fields
 
@@ -47,16 +47,16 @@ You can now...
 * specify the default status
 
     >> belongs_to_enum :status, { 1 => :new, 2 => {:name => :in_progress, :title => 'Continuing', :position => 100, :default => true}}
-    >> User.status(:in_progress).default?
+    >> Task.status(:in_progress).default?
     => true
-    >> User.default_status
+    >> Task.default_status
     => EnumField(id: 2, name: :in_progress, title: "Continuing", position: 100, :default? => true)
 
 == validates_inclusion_of_enum
 
 To validate that the value of status is in the enum field list, you can use validates_inclusion_of_enum macro
 
-    class User < ActiveRecord::Base
+    class Task < ActiveRecord::Base
       belongs_to_enum :status, { 1 => :new, 2 => :in_progress, 3 => :completed, 4 => :cancelled}
       validates_inclusion_of_enum :status_id
     end
@@ -79,29 +79,18 @@ It's possible to save the enum fields in a database table. The table must have t
       t.boolean :default
     end
 
-You can then pass <code>Status.all</code> instead of a hash to belongs_to_enum
+You must then call acts_as_enum_field in the class
 
-    class User < ActiveRecord::Base
-      belongs_to_enum :status, Status.all
+    class Status < ActiveRecord::Base
+      acts_as_enum_field
     end
 
-User.statuses will return instances of Status WITH ActsAsEnumField extensions. For example, if the title of User.status(:new) is nil,
-calling <code>User.status(:new).title</code> will still return the titleized name like the EnumField.
+    class Task < ActiveRecord::Base
+      belongs_to_enum :status
+    end
 
-Beware however that the Status class itself is not extended with ActsAsEnumField. While the status below will
-have the extensions,
-    >> s = User.status(1)
-    >> s.acts_as_enum_field?
-    => true
-
-Status.first won't have them.
-    >> s = Status.first
-    >> s.acts_as_enum_field?
-    NoMethodError: undefined method `acts_as_enum_field?' for #<Status:0xb6dc12a0>
-      from /usr/lib/ruby/gems/1.8/gems/activerecord-2.2.2/lib/active_record/attribute_methods.rb:255:in `method_missing'
-      from (irb):5
-
-This limitation is something I hope to work on in a future release.
+Status will now have ActsAsEnumField extensions. For example, if the title of Status.first is nil,
+calling <code>Status.first.title</code> will still return the titleized name like the EnumField.
 
 == Sample usage
 
@@ -109,7 +98,7 @@ Here's how I might use belongs_to_enum.
 
 In the model,
 
-    class User < ActiveRecord::Base
+    class Task < ActiveRecord::Base
       belongs_to_enum :status,
       { 1 => {:name => :new, :default => true}
         2 => {:name => :in_progress, :title => 'Continuing'},
@@ -120,14 +109,14 @@ In the model,
 
       # Set the status to the default status
       def after_initialize
-        self.status ||= User.default_status if self.new_record?
+        self.status ||= Task.default_status if self.new_record?
       end
     end
 
 Writing a dropdown for the statuses is pretty straightforward
 
-    form_for @user do |f|
-      f.select(:status_id, User.statuses.collect {|p| [ p.title, p.id ] }, { :include_blank => true })
+    form_for @task do |f|
+      f.select(:status_id, Task.statuses.collect {|p| [ p.title, p.id ] }, { :include_blank => true })
     end
 
 == Similar plugins
