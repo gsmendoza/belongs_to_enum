@@ -1,6 +1,6 @@
 ActiveRecord::Schema.define(:version => 0) do
 
-  create_table "users", :force => true do |t|
+  create_table "tasks", :force => true do |t|
     t.string   "name"
     t.integer  "status_id"
     t.datetime "created_at"

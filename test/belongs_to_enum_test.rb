@@ -5,7 +5,7 @@ class BelongsToEnumTest < ActiveSupport::TestCase
 
   #-----------------------------------------------
 
-  class User < ActiveRecord::Base
+  class Task < ActiveRecord::Base
     belongs_to_enum :status,
     { 1 => :new,
       2 => {:name => :in_progress, :title => 'Continuing'},
@@ -16,94 +16,94 @@ class BelongsToEnumTest < ActiveSupport::TestCase
   end
 
   test "Schema has loaded correctly" do
-    assert_equal [], User.all
+    assert_equal [], Task.all
   end
 
-  test "User.default_status is nil if there is no default status" do
-    assert_nil User.default_status
+  test "Task.default_status is nil if there is no default status" do
+    assert_nil Task.default_status
   end
 
-  test "User.statuses should return an array of statuses sorted by position" do
-    assert_equal 4, User.statuses.size
-    assert_equal Array, User.statuses.class
+  test "Task.statuses should return an array of statuses sorted by position" do
+    assert_equal 4, Task.statuses.size
+    assert_equal Array, Task.statuses.class
 
-    statuses = User.statuses
+    statuses = Task.statuses
     1.upto(3) do |i|
       assert statuses[i].position >= statuses[i-1].position
     end
   end
 
-  test "User.status(name/id) should return the status" do
-    status = User.status(1)
+  test "Task.status(name/id) should return the status" do
+    status = Task.status(1)
     assert_equal 1, status.id
     assert_equal :new, status.name
 
-    status = User.status(:cancelled)
+    status = Task.status(:cancelled)
     assert_equal :cancelled, status.name
   end
 
-  test "User.status(key) should raise an error if the key is not an integer or symbol" do
+  test "Task.status(key) should raise an error if the key is not an integer or symbol" do
     assert_raise RuntimeError do
-      status = User.status('New')
+      status = Task.status('New')
     end
   end
 
   test "belongs_to_enum should raise an runtime error if a value in the hash is not a symbol or a hash" do
     assert_raise RuntimeError do
-      User.belongs_to_enum :status, {1 => 100}
+      Task.belongs_to_enum :status, {1 => 100}
     end
   end
 
   test "belongs_to_enum should base the position from the id if it is not provided" do
-    status = User.status(1)
+    status = Task.status(1)
     assert_equal 1, status.position
   end
 
   test "belongs_to_enum should base the display name from the name if it is not provided" do
-    status = User.status(:completed)
+    status = Task.status(:completed)
     assert_equal 'Completed', status.title
   end
 
   test "belongs_to_enum should set the position it is provided" do
-    status = User.status(:completed)
+    status = Task.status(:completed)
     assert_equal 300, status.position
   end
 
   test "belongs_to_enum should set the display name if it is provided" do
-    status = User.status(:cancelled)
+    status = Task.status(:cancelled)
     assert_equal 'Ended', status.title
   end
 
   test "I can set the status by EnumField object or by name" do
-    user = User.new(:status => User.status(:new))
-    assert_equal :new, user.status.name
+    task = Task.new(:status => Task.status(:new))
+    assert_equal :new, task.status.name
 
-    user.status = :completed
-    assert_equal :completed, user.status.name
+    task.status = :completed
+    assert_equal :completed, task.status.name
 
-    user.status = nil
-    assert_nil user.status
-    assert_nil user.status_id
+    task.status = nil
+    assert_nil task.status
+    assert_nil task.status_id
   end
 
-  test "user should not be valid if I set the status to a status that is not in the belongs_to_enum list" do
-    user = User.new(:status_id => 5)
-    assert ! user.valid?
-    assert_equal 1, user.errors.size
-    assert_match 'is not valid', user.errors.full_messages[0]
+  test "task should not be valid if I set the status to a status that is not in the belongs_to_enum list" do
+    task = Task.new(:status_id => 5)
+    assert ! task.valid?
+    assert_equal 1, task.errors.size
+    assert_match 'is not valid', task.errors.full_messages[0]
   end
 
-  test "I can check if user.<status.name>? is true" do
-    user = User.new(:status => :completed)
-    assert user.completed?
-    assert ! user.new?
+  test "I can check if task.<status.name>? is true" do
+    task = Task.new(:status => :completed)
+    assert task.completed?
+    assert ! task.new?
   end
 
-  test "The methods added by belongs_to_enum should work fine if user.status_id is nil" do
-    user = User.new
-    assert_nil user.status_id
-    assert_nil user.status
-    assert ! user.new?
+  test "The methods added by belongs_to_enum should work fine if task.status_id is nil" do
+    task = Task.new
+    assert_nil task.status_id
+    assert_nil task.status
+    assert ! task.new?
   end
 
   #-----------------------------------------------
