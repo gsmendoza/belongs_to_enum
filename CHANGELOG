@@ -1,0 +1,11 @@
+= Changelog
+
+== 0.9 - 2009-03-14
+
+- Added acts_as_enum_field
+- No longer need to pass array of records if belongs_to_enum is associated with an ActiveRecord
+- Updated documentation
+
+== 0.8 - 2009-03-07
+
+- Initial version
