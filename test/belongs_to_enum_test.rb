@@ -142,6 +142,7 @@ class BelongsToEnumTest < ActiveSupport::TestCase
 
   class Status < ActiveRecord::Base
     has_many :posts
+    acts_as_enum_field
 
     def inspect
       inspect_attributes :id, :name, :title, :position, :default?
@@ -162,7 +163,7 @@ class BelongsToEnumTest < ActiveSupport::TestCase
     validates_inclusion_of_enum :status_id, { :in => [:completed, :cancelled], :message => "must be completed or ended", :allow_blank => true}
   end
 
-  test "I can use both belongs_to and belongs_to_enum without exploding" do
+  test "using belongs_to_enum with an active record should not explode" do
     assert_equal 4, Post.statuses.size
     assert_kind_of Status, Post.statuses[0]
     

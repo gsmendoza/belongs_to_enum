@@ -16,9 +16,9 @@ module BelongsToEnum
       enum_fields = {}
       if objects.is_a?(Array)
         self.belongs_to field
-        objects.each do |record|
-          record.extend ActsAsEnumField
-          enum_fields[record.name] = record
+        objects.each do |record| 
+          enum_field = record
+          enum_fields[enum_field.name] = enum_field
         end
       elsif objects.is_a?(Hash)
         id_to_object_hash = objects
@@ -30,7 +30,6 @@ module BelongsToEnum
           else
             raise "BUG: invalid argument " + object.class.name
           end
-          enum_field.extend ActsAsEnumField
           enum_fields[enum_field.name] = enum_field
         end
       else
@@ -88,7 +87,7 @@ module BelongsToEnum
           self.send "#{field_id_str}=", nil
         elsif object.is_a?(Symbol)
           self.send "#{field_id_str}=", self.class.send(field, object).id
-        elsif object.kind_of?(ActsAsEnumField)
+        elsif object.kind_of?(ActsAsEnumField::InstanceMethods)
           self.send "#{field_id_str}=", object.id
         else
           raise "BUG: invalid argument " + object.class.name

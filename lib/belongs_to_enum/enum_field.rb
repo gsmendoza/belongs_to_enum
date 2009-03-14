@@ -1,6 +1,9 @@
 module BelongsToEnum
   class EnumField
-    attr_accessor :id,  :name, :title, :position, :default
+    include BelongsToEnum::ActsAsEnumField::InstanceMethods
+
+    attr_writer :id, :name, :title, :position, :default
+    attr_reader :id, :default
 
     def initialize(id, name, options ={})
       options = HashWithIndifferentAccess.new(options)
@@ -16,3 +19,5 @@ module BelongsToEnum
     end
   end
 end
+
+
