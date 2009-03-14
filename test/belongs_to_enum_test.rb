@@ -159,13 +159,12 @@ class BelongsToEnumTest < ActiveSupport::TestCase
   Status.create :name => 'cancelled', :title => 'Ended', :position => 5
 
   class Post < ActiveRecord::Base
-    belongs_to_enum :status, Status.all
+    belongs_to_enum :status
     validates_inclusion_of_enum :status_id, { :in => [:completed, :cancelled], :message => "must be completed or ended", :allow_blank => true}
   end
 
   test "using belongs_to_enum with an active record should not explode" do
     assert_equal 4, Post.statuses.size
-    assert_kind_of Status, Post.statuses[0]
     
     assert_equal :in_progress, Post.status(:in_progress).name
     assert_equal 300, Post.default_status.position
@@ -173,7 +172,6 @@ class BelongsToEnumTest < ActiveSupport::TestCase
     post = Post.new
 
     post.status = :in_progress
-    assert_kind_of Status, post.status
     assert ! post.new?
     assert post.in_progress?
 

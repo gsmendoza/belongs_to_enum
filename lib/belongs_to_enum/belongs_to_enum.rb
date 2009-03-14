@@ -5,18 +5,19 @@ module BelongsToEnum
   
   module ClassMethods
     # See the README for how to use this method
-    def belongs_to_enum(field, objects)
+    def belongs_to_enum(field, objects = nil)
       fields_str = field.to_s.tableize
       field_id_str = field.to_s.foreign_key
       name_to_field_str = 'name_to_' + field.to_s
+      field_class_str = field.to_s.tableize.classify
 
       #-------------------------------------------
       # name to field hash
 
       enum_fields = {}
-      if objects.is_a?(Array)
+      if objects.nil?
         self.belongs_to field
-        objects.each do |record| 
+        field_class_str.constantize.all.each do |record| 
           if record.kind_of?(ActsAsEnumField::InstanceMethods)
             enum_field = record
             enum_fields[enum_field.name] = enum_field
