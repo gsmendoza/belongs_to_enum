@@ -17,8 +17,12 @@ module BelongsToEnum
       if objects.is_a?(Array)
         self.belongs_to field
         objects.each do |record| 
-          enum_field = record
-          enum_fields[enum_field.name] = enum_field
+          if record.kind_of?(ActsAsEnumField::InstanceMethods)
+            enum_field = record
+            enum_fields[enum_field.name] = enum_field
+          else
+            raise "#{record} is not an instance of ActsAsEnumField. Call acts_as_enum_field within class #{record.class}"
+          end
         end
       elsif objects.is_a?(Hash)
         id_to_object_hash = objects
