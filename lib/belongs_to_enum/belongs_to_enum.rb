@@ -7,38 +7,7 @@ module BelongsToEnum
     # See the README for how to use this method
     def belongs_to_enum(field_name, objects = nil)
       field = FieldWrapper.new(field_name)
-      #-------------------------------------------
-      # name to field hash
-
-      enum_fields = {}
-      if objects.nil?
-        self.belongs_to field.name
-        field.klass.all.each do |record|
-          if record.kind_of?(ActsAsEnumField::InstanceMethods)
-            enum_field = record
-            enum_fields[enum_field.name] = enum_field
-          else
-            raise "#{record} is not an instance of ActsAsEnumField. Call acts_as_enum_field within class #{record.class}"
-          end
-        end
-      elsif objects.is_a?(Hash)
-        id_to_object_hash = objects
-        id_to_object_hash.each do |id, object|
-          if object.is_a?(Symbol)
-            enum_field = EnumField.new(id, object)
-          elsif object.is_a?(Hash)
-            enum_field = EnumField.new(id, object[:name], object)
-          else
-            raise "BUG: invalid argument " + object.class.name
-          end
-          enum_fields[enum_field.name] = enum_field
-        end
-      else
-        raise "BUG: invalid argument " + objects.class.name
-      end
-
-      cattr_accessor field.name_to_field_str
-      self.send "#{field.name_to_field_str}=", enum_fields
+      define_name_to_field_hash(field, objects)
 
       #-------------------------------------------
 
@@ -93,7 +62,7 @@ module BelongsToEnum
       end
 
       # user.new?
-      enum_fields.values.each do |enum_field|
+      send(field.name_to_field_str).values.each do |enum_field|
         define_method("#{enum_field.name}?") do
           self.send(field.name).name == enum_field.name unless self.send(field.name).nil?
         end
@@ -118,7 +87,37 @@ module BelongsToEnum
     end
 
   protected
-    def define_name_to_field_hash
+    def define_name_to_field_hash(field, objects)
+      enum_fields = {}
+      if objects.nil?
+        self.belongs_to field.name
+        field.klass.all.each do |record|
+          if record.kind_of?(ActsAsEnumField::InstanceMethods)
+            enum_field = record
+            enum_fields[enum_field.name] = enum_field
+          else
+            raise "#{record} is not an instance of ActsAsEnumField. Call acts_as_enum_field within class #{record.class}"
+          end
+        end
+      elsif objects.is_a?(Hash)
+        id_to_object_hash = objects
+        id_to_object_hash.each do |id, object|
+          if object.is_a?(Symbol)
+            enum_field = EnumField.new(id, object)
+          elsif object.is_a?(Hash)
+            enum_field = EnumField.new(id, object[:name], object)
+          else
+            raise "BUG: invalid argument " + object.class.name
+          end
+          enum_fields[enum_field.name] = enum_field
+        end
+      else
+        raise "BUG: invalid argument " + objects.class.name
+      end
+
+      cattr_accessor field.name_to_field_str
+      self.send "#{field.name_to_field_str}=", enum_fields
+      enum_fields
     end
   end
 end
