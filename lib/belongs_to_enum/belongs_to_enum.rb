@@ -42,38 +42,32 @@ module BelongsToEnum
     #Class.<fields>
     #    Task.statuses
     def define_fields_class_method(field)
-      class_eval <<-EVAL
-        def self.#{field.tableize}
-          #{field.name_to_field_str}.values.sort
-        end
-      EVAL
+      meta_def field.tableize do
+        send(field.name_to_field_str).values.sort
+      end
     end
 
     #Class.<field>(key)
     #    Task.status(1)
     #    Task.status(:new)
     def define_field_class_method(field)
-      class_eval <<-EVAL
-        def self.#{field.name}(object)
-          if object.is_a?(Symbol)
-            return #{field.name_to_field_str}[object]
-          elsif object.is_a?(Integer)
-            return #{field.name_to_field_str}.values.detect{|enum_field| enum_field.id == object}
-          else
-            raise "BUG: invalid argument " + object.class.name
-          end
+      meta_def field.name do |object|
+        if object.is_a?(Symbol)
+          return send(field.name_to_field_str)[object]
+        elsif object.is_a?(Integer)
+          return send(field.name_to_field_str).values.detect{|enum_field| enum_field.id == object}
+        else
+          raise "BUG: invalid argument " + object.class.name
         end
-      EVAL
+      end
     end
 
     #Class.default_<field>
     #   Task.default_status
     def define_default_field_class_method(field)
-      class_eval <<-EVAL
-        def self.default_#{field.name}
-          #{field.tableize}.detect{|enum_field| enum_field.default?}
-        end
-      EVAL
+      meta_def "default_#{field.name}" do
+        send(field.tableize).detect{|enum_field| enum_field.default?}
+      end
     end
 
     def define_name_to_field_hash(field, objects)
