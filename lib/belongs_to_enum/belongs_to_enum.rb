@@ -9,64 +9,15 @@ module BelongsToEnum
       field = FieldWrapper.new(field_name)
       define_name_to_field_hash(field, objects)
 
-      #-------------------------------------------
+      # class methods
+      define_fields_class_method field
+      define_field_class_method field
+      define_default_field_class_method field
 
-      class_eval <<-EVAL
-        #---------------------------------------
-        # fields method
-        # User.statuses
-        def self.#{field.tableize}
-          #{field.name_to_field_str}.values.sort
-        end
-
-        #---------------------------------------
-        # User.status(1)
-        # User.status(:new)
-        def self.#{field.name}(object)
-          if object.is_a?(Symbol)
-            return #{field.name_to_field_str}[object]
-          elsif object.is_a?(Integer)
-            return #{field.name_to_field_str}.values.detect{|enum_field| enum_field.id == object}
-          else
-            raise "BUG: invalid argument " + object.class.name
-          end
-        end
-
-        #---------------------------------------
-        # default_field
-        def self.default_#{field.name}
-          #{field.tableize}.detect{|enum_field| enum_field.default?}
-        end
-      EVAL
-
-      #---------------------------------------
       # instance methods
-
-      # user.status
-      define_method field.name do
-        self.class.send(field.name, self.send(field.foreign_key)) unless self.send(field.foreign_key).nil?
-      end
-
-      # user.status = :new
-      # user.status = 1
-      define_method "#{field.name}=" do |object|
-        if object.nil?
-          self.send "#{field.foreign_key}=", nil
-        elsif object.is_a?(Symbol)
-          self.send "#{field.foreign_key}=", self.class.send(field.name, object).id
-        elsif object.kind_of?(ActsAsEnumField::InstanceMethods)
-          self.send "#{field.foreign_key}=", object.id
-        else
-          raise "BUG: invalid argument " + object.class.name
-        end
-      end
-
-      # user.new?
-      send(field.name_to_field_str).values.each do |enum_field|
-        define_method("#{enum_field.name}?") do
-          self.send(field.name).name == enum_field.name unless self.send(field.name).nil?
-        end
-      end
+      define_field_method field
+      define_set_field_method field
+      define_is_field_method field
 
     end
 
@@ -87,6 +38,44 @@ module BelongsToEnum
     end
 
   protected
+
+    #Class.<fields>
+    #    Task.statuses
+    def define_fields_class_method(field)
+      class_eval <<-EVAL
+        def self.#{field.tableize}
+          #{field.name_to_field_str}.values.sort
+        end
+      EVAL
+    end
+
+    #Class.<field>(key)
+    #    Task.status(1)
+    #    Task.status(:new)
+    def define_field_class_method(field)
+      class_eval <<-EVAL
+        def self.#{field.name}(object)
+          if object.is_a?(Symbol)
+            return #{field.name_to_field_str}[object]
+          elsif object.is_a?(Integer)
+            return #{field.name_to_field_str}.values.detect{|enum_field| enum_field.id == object}
+          else
+            raise "BUG: invalid argument " + object.class.name
+          end
+        end
+      EVAL
+    end
+
+    #Class.default_<field>
+    #   Task.default_status
+    def define_default_field_class_method(field)
+      class_eval <<-EVAL
+        def self.default_#{field.name}
+          #{field.tableize}.detect{|enum_field| enum_field.default?}
+        end
+      EVAL
+    end
+
     def define_name_to_field_hash(field, objects)
       enum_fields = {}
       if objects.nil?
@@ -118,6 +107,42 @@ module BelongsToEnum
       cattr_accessor field.name_to_field_str
       self.send "#{field.name_to_field_str}=", enum_fields
       enum_fields
+    end
+
+    #object.<field>
+    #   task.status
+    def define_field_method(field)
+      define_method field.name do
+        self.class.send(field.name, self.send(field.foreign_key)) unless self.send(field.foreign_key).nil?
+      end
+    end
+
+    #object.<field> = <key/enum_field>
+    #   task.status = :new
+    #   task.status = Task.status(1)
+    def define_set_field_method(field)
+      define_method "#{field.name}=" do |object|
+        if object.nil?
+          self.send "#{field.foreign_key}=", nil
+        elsif object.is_a?(Symbol)
+          self.send "#{field.foreign_key}=", self.class.send(field.name, object).id
+        elsif object.kind_of?(ActsAsEnumField::InstanceMethods)
+          self.send "#{field.foreign_key}=", object.id
+        else
+          raise "BUG: invalid argument " + object.class.name
+        end
+      end
+    end
+
+    #object.<field>?
+    #   task.new?
+    #   task.completed?
+    def define_is_field_method field
+      send(field.name_to_field_str).values.each do |enum_field|
+        define_method("#{enum_field.name}?") do
+          self.send(field.name).name == enum_field.name unless self.send(field.name).nil?
+        end
+      end
     end
   end
 end
