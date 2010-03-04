@@ -1,5 +1,7 @@
 = BelongsToEnum
 
+IMPORTANT: Please be aware that I am no longer actively maintaining this plugin. I highly recommend the ActiveHash gem for setting up enum fields in your project.
+
 == belongs_to_enum
 
 Given that Task has an attribute status_id, you can define its enum fields like this:
